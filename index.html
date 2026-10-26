@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Trabalhos Escolares</title>
+    <!-- Tailwind CSS para um design moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Cabeçalho -->
+    <header class="bg-indigo-600 text-white shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-6 text-center">
+            <h1 class="text-3xl font-bold">📚 Meus Trabalhos Escolares</h1>
+            <p class="text-indigo-200 mt-1">Organize suas tarefas, prazos e notas em um só lugar</p>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow">
+        
+        <!-- Formulário de Cadastro -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-indigo-700">Cadastrar Novo Trabalho</h2>
+            <form id="workForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Título do Trabalho</label>
+                    <input type="text" id="title" required placeholder="Ex: Pesquisa de História" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Matéria</label>
+                    <input type="text" id="subject" required placeholder="Ex: Matemática" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Data de Entrega</label>
+                    <input type="date" id="dueDate" required class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Descrição / Observações</label>
+                    <input type="text" id="description" placeholder="Ex: Fazer em dupla, páginas 40 a 45" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="md:col-span-2">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition duration-200 shadow-sm">
+                        Adicionar Trabalho
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Lista de Trabalhos -->
+        <section>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-slate-700">Lista de Trabalhos</h2>
+                <span id="counter" class="text-sm bg-indigo-100 text-indigo-800 font-medium px-3 py-1 rounded-full">0 trabalhos</span>
+            </div>
+            
+            <div id="worksList" class="space-y-3">
+                <!-- Os trabalhos cadastrados aparecerão aqui dinamicamente -->
+            </div>
+            
+            <!-- Mensagem caso esteja vazio -->
+            <div id="emptyMessage" class="text-center py-12 text-slate-400 hidden">
+                <p class="text-lg">Nenhum trabalho cadastrado no momento. Oba! 🎉</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-sm text-slate-500">
+        Desenvolvido para organizar seus estudos com facilidade.
+    </footer>
+
+    <!-- Script de Funcionalidade -->
+    <script>
+        const form = document.getElementById('workForm');
+        const worksList = document.getElementById('worksList');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const counter = document.getElementById('counter');
+
+        // Carregar trabalhos salvos no navegador ou iniciar lista vazia
+        let works = JSON.parse(localStorage.getItem('schoolWorks')) || [];
+
+        function saveAndRender() {
+            localStorage.setItem('schoolWorks', JSON.stringify(works));
+            renderWorks();
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const newWork = {
+                id: Date.now(),
+                title: document.getElementById('title').value,
+                subject: document.getElementById('subject').value,
+                dueDate: document.getElementById('dueDate').value,
+                description: document.getElementById('description').value,
+                completed: false
+            };
+
+            works.push(newWork);
+            saveAndRender();
+            form.reset();
+        });
+
+        function toggleComplete(id) {
+            works = works.map(work => {
+                if (work.id === id) {
+                    return { ...work, completed: !work.completed };
+                }
+                return work;
+            });
+            saveAndRender();
+        }
+
+        function deleteWork(id) {
+            works = works.filter(work => work.id !== id);
+            saveAndRender();
+        }
+
+        function renderWorks() {
+            worksList.innerHTML = '';
+            counter.textContent = `${works.length} ${works.length === 1 ? 'trabalho' : 'trabalhos'}`;
+
+            if (works.length === 0) {
+                emptyMessage.classList.remove('hidden');
+                return;
+            } else {
+                emptyMessage.classList.add('hidden');
+            }
+
+            // Ordenar por data de entrega mais próxima
+            works.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            works.forEach(work => {
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition bg-white ${work.completed ? 'border-emerald-200 bg-emerald-50/30 opacity-75' : 'border-slate-200'}`;
+
+                // Formatar data para o padrão brasileiro (DD/MM/AAAA)
+                const [year, month, day] = work.dueDate.split('-');
+                const formattedDate = `${day}/${month}/${year}`;
+
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-indigo-100 text-indigo-800">${work.subject}</span>
+                            <h3 class="font-semibold text-lg ${work.completed ? 'line-through text-slate-500' : 'text-slate-800'}">${work.title}</h3>
+                        </div>
+                        <p class="text-sm text-slate-600">${work.description || 'Sem observações.'}</p>
+                        <p class="text-xs text-slate-500 font-medium">Entrega: 📅 ${formattedDate}</p>
+                    </div>
+                    <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                        <button onclick="toggleComplete(${work.id})" class="px-3 py-1.5 text-sm font-medium rounded-lg border transition ${work.completed ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'}">
+                            ${work.completed ? 'Concluído ✅' : 'Marcar como Concluído'}
+                        </button>
+                        <button onclick="deleteWork(${work.id})" class="px-3 py-1.5 text-sm font-medium rounded-lg bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition">
+                            Excluir 🗑️
+                        </button>
+                    </div>
+                `;
+                worksList.appendChild(card);
+            });
+        }
+
+        // Renderizar ao carregar a página pela primeira vez
+        renderWorks();
+    </script>
+</body>
+</html>
+index.html
+Exibindo index.html.
